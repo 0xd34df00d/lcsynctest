@@ -49,6 +49,8 @@ void MainWindow::on_Disconnect__released ()
 void MainWindow::on_SendData__released ()
 {
 	QStringList strings = Ui_.ToSend_->toPlainText ().split ('\n', QString::SkipEmptyParts);
+	Log ("Preparing to send:", System);
+	Log (Ui_.ToSend_->toPlainText (), Data);
 
 	QList<QByteArray> bytes;
 
@@ -61,16 +63,16 @@ void MainWindow::on_SendData__released ()
 	{
 		QDataStream ds (&msg, QIODevice::WriteOnly);
 		ds.setByteOrder (QDataStream::BigEndian);
-		quint32 len=4;
+		quint32 len = 4;
 		Q_FOREACH (const QByteArray& ba, bytes)
-			len+=ba.size ()+4;
+			len += ba.size () + 4;
 		ds << len;
 		ds << numLists;
 		Q_FOREACH (const QByteArray& ba, bytes)
 			ds << static_cast<quint32> (ba.size ());
 		Q_FOREACH (const QByteArray& ba, bytes)
-			for (int i=0;i<ba.size();i++)
-				ds << (unsigned char)ba[i];
+			for (int i = 0; i < ba.size (); i++)
+				ds << static_cast<unsigned char> (ba[i]);
 	}
 	Log ("Sending:", System);
 	Log (msg.toHex (), Data);
@@ -110,7 +112,44 @@ void MainWindow::handleReadyRead ()
 {
 	Log ("Ready read", System);
 	QByteArray all = Socket_.readAll ().mid (4);
+
 	Log ("Hex:", System);
 	Log (all.toHex (), Data);
+
+	QDataStream ds (all);
+	QStringList strings;
+	{
+		quint32 len;
+		quint32 numLists;
+		ds >> len;
+		ds >> numLists;
+		QList<quint32> listLengths;
+		QList<QByteArray> lists;
+		for (int i = 0; i < numLists; ++i)
+		{
+			quint32 ll = 0;
+			ds >> ll;
+			listLengths << ll;
+		}
+
+		for (int i = 0; i < numLists; ++i)
+		{
+			lists << QByteArray ();
+
+			for (int b = 0, numBytes = listLengths.at (i);
+					b < numBytes; ++b)
+			{
+				unsigned char byte = 0;
+				ds >> byte;
+				lists [i].append (byte);
+			}
+		}
+
+		Q_FOREACH (const QByteArray& ba, lists)
+			strings << ba;
+	}
+
+	Log ("Parsed:", System);
+	Log (strings.join ("\n"), Data);
 }
 
