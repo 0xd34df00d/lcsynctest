@@ -61,11 +61,16 @@ void MainWindow::on_SendData__released ()
 	{
 		QDataStream ds (&msg, QIODevice::WriteOnly);
 		ds.setByteOrder (QDataStream::BigEndian);
+		quint32 len=4;
+		Q_FOREACH (const QByteArray& ba, bytes)
+			len+=ba.size ()+4;
+		ds << len;
 		ds << numLists;
 		Q_FOREACH (const QByteArray& ba, bytes)
 			ds << static_cast<quint32> (ba.size ());
 		Q_FOREACH (const QByteArray& ba, bytes)
-			ds << ba;
+			for (int i=0;i<ba.size();i++)
+				ds << (unsigned char)ba[i];
 	}
 	Log ("Sending:", System);
 	Log (msg.toHex (), Data);
@@ -104,6 +109,7 @@ void MainWindow::handleBytesWritten (qint64 bytes)
 void MainWindow::handleReadyRead ()
 {
 	Log ("Ready read", System);
+	Socket_.readInt();
 	QByteArray all = Socket_.readAll ();
 	Log ("Hex:", System);
 	Log (all.toHex (), Data);
