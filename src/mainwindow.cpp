@@ -111,7 +111,7 @@ void MainWindow::handleBytesWritten (qint64 bytes)
 void MainWindow::handleReadyRead ()
 {
 	Log ("Ready read", System);
-	QByteArray all = Socket_.readAll ().mid (4);
+	QByteArray all = Socket_.readAll ();
 
 	Log ("Hex:", System);
 	Log (all.toHex (), Data);
