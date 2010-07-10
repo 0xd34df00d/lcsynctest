@@ -57,11 +57,11 @@ void MainWindow::on_SendData__released ()
 	Q_FOREACH (const QString& string, strings){
 		QByteArray b=string.trimmed ().toLatin1 ();
 		int from=0,i;
-		while((i=b.indexOf('\',from))!=-1){
+		while((i=b.indexOf('\\',from))!=-1){
 			if(i+1<b.size()&& b[1+i]=='\\'){
 				b.replace(i,2,"\\");
 			}else if(i+3<b.size() && b[1+i]=='x'){
-				QByteArray byte=QByteArray::fromHex(b.mid(b+2,2));
+				QByteArray byte=QByteArray::fromHex(b.mid(i+2,2));
 				b.replace(i,4,byte);
 			}
 			from=i+1;
